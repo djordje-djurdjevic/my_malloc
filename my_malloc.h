@@ -9,6 +9,7 @@
 #define BLOCK_MARKER 0xDEADBEEF
 
 void* my_malloc(size_t size);
+void  my_free(void *pointer);
 
 typedef struct Blocks
 {

@@ -1,9 +1,11 @@
 # executables
 *.out
-*.exe
+test
+test_debug
 
 # object files
 *.o
 
 # temporary files
 cases_to_cover.txt
+
