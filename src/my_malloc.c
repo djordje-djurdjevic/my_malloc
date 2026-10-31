@@ -97,13 +97,15 @@ void my_free(void *pointer)
     if (block->marker != BLOCK_MARKER)
     {
         char temp[] = "my_free: invalid pointer\n"; 
-        write(2, temp, sizeof(temp) -1);
+        ssize_t r = write(2, temp, sizeof(temp) -1);
+        (void)r;
         return;
     }
     if (!block->in_use)
     {
         char temp[] = "my_free: double free detected\n";
-        write(2, temp, sizeof(temp) -1);
+        ssize_t r = write(2, temp, sizeof(temp) -1);
+        (void)r;
         return;
     }
     

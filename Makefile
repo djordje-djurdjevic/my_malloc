@@ -1,17 +1,17 @@
-CC	   	= gcc
-CFLAGS	= -Wall -Wextra
-SRC 	= my_malloc.c main.c
-HDR 	= my_malloc.h
+CC      = gcc
+CFLAGS  = -Wall -Wextra -Iinclude
+SRC     = src/my_malloc.c src/test_funcs.c src/main.c
+HDR     = include/my_malloc.h include/test_funcs.h
 
 all: test
 
 test: $(SRC) $(HDR)
-	$(CC) $(CFLAGS) -o2 $(SRC) -o test
+	$(CC) $(CFLAGS) -O2 $(SRC) -o test
 
 debug: $(SRC) $(HDR)
-	$(CC) $(CFLAGS) -g -o0 $(SRC) -o test_debug
+	$(CC) $(CFLAGS) -g -O0 $(SRC) -o test_debug
 
-clean: $(SRC) $(HDR)
+clean:
 	rm -f test test_debug
 
 .PHONY: all debug clean
