@@ -85,26 +85,26 @@ void* my_malloc(size_t size)
         tail = block;
     }
                                 // return (void *)(ret_val + sizeof(Blocks));
-    return (void *)(block +1); // next address after the block header
+    return (void *)(block + 1); // next address after the block header
 }
 
 void my_free(void *pointer)
 {   
     if (pointer == NULL) return;
 
-    Blocks *block = (Blocks *)pointer -1;
+    Blocks *block = (Blocks *)pointer - 1;
 
     if (block->marker != BLOCK_MARKER)
     {
         char temp[] = "my_free: invalid pointer\n"; 
-        ssize_t r = write(2, temp, sizeof(temp) -1);
+        ssize_t r = write(2, temp, sizeof(temp) - 1);
         (void)r;
         return;
     }
     if (!block->in_use)
     {
         char temp[] = "my_free: double free detected\n";
-        ssize_t r = write(2, temp, sizeof(temp) -1);
+        ssize_t r = write(2, temp, sizeof(temp) - 1);
         (void)r;
         return;
     }

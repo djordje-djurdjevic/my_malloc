@@ -16,7 +16,7 @@ typedef struct Blocks
     size_t length;   
     struct Blocks *next;
     struct Blocks *previous;
-    uint32_t marker;
+    uint_least32_t marker;
     bool in_use;
 } Blocks;
 
