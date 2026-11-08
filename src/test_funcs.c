@@ -266,3 +266,144 @@ void data_integrity(void)
         assert(pc[i] == 0XCC);
     }
 }
+
+void merge_free_blocks(void)
+{
+    int *a = my_malloc(sizeof(int));
+    int *b = my_malloc(sizeof(int));
+    int *c = my_malloc(sizeof(int));
+
+    my_free(a);
+    my_free(b);
+
+    int *d = my_malloc(64); // 16 + 16 + 32
+
+    assert(d == a);
+    assert(((Blocks *)d - 1)->length == 64);
+    assert(((Blocks *)d - 1)->next == (Blocks *)c - 1);
+    assert(((Blocks *)c - 1)->previous == (Blocks *)d - 1);
+
+}
+
+void merge_free_blocks_previous(void)
+{
+    int *a = my_malloc(sizeof(int));
+    int *b = my_malloc(sizeof(int));
+    int *c = my_malloc(sizeof(int));
+
+    my_free(a);
+    my_free(b);
+
+    int *d = my_malloc(64); // 16 + 16 + 32
+
+    assert(d == a);
+    assert(((Blocks *)d - 1)->length == 64);
+    assert(((Blocks *)d - 1)->next == (Blocks *)c - 1);
+    assert(((Blocks *)c - 1)->previous == (Blocks *)d - 1);
+
+}
+
+void merge_free_blocks_next(void)
+{   
+    int *a = my_malloc(sizeof(int));
+    int *b = my_malloc(sizeof(int));
+    int *c = my_malloc(sizeof(int));
+
+    my_free(b);
+    my_free(a);
+
+    int *d = my_malloc(64); // 16 + 16 + 32
+
+    assert(d == a);
+    assert(((Blocks *)d - 1)->length == 64);
+    assert(((Blocks *)d - 1)->next == (Blocks *)c - 1);
+    assert(((Blocks *)c - 1)->previous == (Blocks *)d - 1);
+}
+
+void merge_free_blocks_next_and_previous(void)
+{
+    int *a = my_malloc(sizeof(int));
+    int *b = my_malloc(sizeof(int));
+    int *c = my_malloc(sizeof(int));
+
+    my_free(a);
+    my_free(c);
+    my_free(b);
+
+    assert( ((Blocks *)a - 1)->length == 112);
+    assert( ((Blocks *)a - 1)->next == NULL);
+    assert(!((Blocks *)a - 1)->in_use);
+
+
+    int *d = my_malloc(64 + 48); // 64+48   
+    int *e = my_malloc(sizeof(int));
+
+    assert(d == a);
+    assert(((Blocks *)d - 1)->length == 64 + 48);
+
+    //e is the last block
+    assert(e > d);
+    assert(((Blocks *)d - 1)->next == (Blocks *)e - 1);
+    assert(((Blocks *)e - 1)->previous == (Blocks *)d - 1);
+}
+
+void no_merge_free_middle_block(void)
+{
+    int *a = my_malloc(sizeof(int));
+    int *b = my_malloc(sizeof(int));
+    int *c = my_malloc(sizeof(int));
+
+    my_free(b);
+
+    assert(((Blocks *)b - 1)->length == 16);
+    assert(((Blocks *)a - 1)->next == (Blocks *)b - 1);
+    assert(((Blocks *)c - 1)->previous == (Blocks *) b - 1);
+}
+
+void no_merge_hole_in_mem(void)
+{
+    int *a = my_malloc(sizeof(int));
+    sbrk(16);
+    int *b = my_malloc(sizeof(int));
+
+    my_free(a);
+    my_free(b);
+
+    assert(((Blocks *)a - 1)->length == 16);
+    assert(((Blocks *)b - 1)->length == 16);
+
+    assert(((Blocks *)a - 1)->next == (Blocks *)b - 1);
+}
+
+void split_on_merged_block(void)
+{
+    int *a = my_malloc(16);
+    int *b = my_malloc(16);
+
+    my_free(a);
+    my_free(b);
+
+    int *c = my_malloc(sizeof(int));
+
+    assert(c == a);
+
+    assert(((Blocks *)c - 1)->length == 16);
+    assert(((Blocks *)c - 1)->next->length == 16);
+    assert(!((Blocks *)c - 1)->next->in_use);
+    assert(((Blocks *)c - 1)->next->next == NULL);
+
+}
+
+
+void merged_header_not_valid(void)
+{
+    int *a = my_malloc(sizeof(int));
+    int *b = my_malloc(sizeof(int));
+
+    my_free(a);
+    my_free(b);
+
+    my_free(b);
+    assert(((Blocks *)b - 1)->marker == 0);    
+
+}

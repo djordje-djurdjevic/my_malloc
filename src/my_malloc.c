@@ -113,7 +113,7 @@ void my_free(void *pointer)
 
 
     //merging free memory
-    if ((block->next != NULL && !block->next->in_use) && ((char *)(block + 1) + block->length == block->next))
+    if ((block->next != NULL && !block->next->in_use) && ((Blocks *)((char *)(block + 1) + block->length) == block->next))
     {
         block->length += sizeof(Blocks) + block->next->length;
         block->next->marker = 0;
@@ -130,7 +130,7 @@ void my_free(void *pointer)
             block->next = NULL;
         }
     }
-    if((block->previous != NULL && !block->previous->in_use) && ((char *)(block - 1) - block->previous->length == block->previous))
+    if((block->previous != NULL && !block->previous->in_use) && ((Blocks *)((char *)(block - 1) - block->previous->length) == block->previous))
     {
         block->previous->length += sizeof(Blocks) + block->length;
         block->marker = 0;
