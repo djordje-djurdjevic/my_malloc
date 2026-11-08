@@ -110,4 +110,41 @@ void my_free(void *pointer)
     }
     
     block->in_use = false;
+
+
+    //merging free memory
+    if ((block->next != NULL && !block->next->in_use) && ((char *)(block + 1) + block->length == block->next))
+    {
+        block->length += sizeof(Blocks) + block->next->length;
+        block->next->marker = 0;
+
+
+        if (block->next->next != NULL)
+        {
+            block->next->next->previous = block;
+            block->next = block->next->next;
+        }
+        else
+        {
+            tail = block;
+            block->next = NULL;
+        }
+    }
+    if((block->previous != NULL && !block->previous->in_use) && ((char *)(block - 1) - block->previous->length == block->previous))
+    {
+        block->previous->length += sizeof(Blocks) + block->length;
+        block->marker = 0;
+
+
+        if (block->next != NULL)
+        {
+            block->previous->next = block->next;
+            block->next->previous = block->previous;
+        }
+        else
+        {
+            tail = block->previous;
+            block->previous->next = NULL;
+        }
+    }
 }
