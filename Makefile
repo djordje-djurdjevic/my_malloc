@@ -1,5 +1,5 @@
 CC      = gcc
-CFLAGS  = -Wall -Wextra -Iinclude
+CFLAGS  = -Wall -Wextra -Iinclude -pthread
 SRC     = src/my_malloc.c src/test_funcs.c src/main.c
 HDR     = include/my_malloc.h include/test_funcs.h
 

@@ -23,9 +23,9 @@ static Test tests[] = {
     {"merge free blocks previous",          merge_free_blocks_previous},
     {"merge free blocks next and previous", merge_free_blocks_next_and_previous},
     {"no merge middle block",               no_merge_free_middle_block},
-    {"no merge hole in memory", no_merge_hole_in_mem},
-    {"split on merged block", split_on_merged_block},
-    {"mergeed header not valid", merged_header_not_valid},
+    {"no merge hole in memory",             no_merge_hole_in_mem},
+    {"split on merged block",               split_on_merged_block},
+    {"mergeed header not valid",            merged_header_not_valid},
 };
 
 int main() 

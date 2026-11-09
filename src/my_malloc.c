@@ -1,7 +1,9 @@
 #include <unistd.h>
+#include <pthread.h>
 
 #include "my_malloc.h"
 
+static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static Blocks *head = NULL;
 static Blocks *tail; // global/static is already null
@@ -17,6 +19,7 @@ void* my_malloc(size_t size)
     }
 
 
+    pthread_mutex_lock(&mutex); 
     //checking freed blocks
     Blocks *iter = head;
     while (iter != NULL)
@@ -53,6 +56,7 @@ void* my_malloc(size_t size)
                 iter->in_use = true;
             }
 
+            pthread_mutex_unlock(&mutex);
             return (iter +1);
         }
         iter = iter->next;
@@ -60,7 +64,12 @@ void* my_malloc(size_t size)
 
     //increasing the break equivalent to allocating memory
     void *ret_val = sbrk(sizeof(Blocks) + size); //sbrk returns the old break
-    if (ret_val == (void *)-1) return NULL;
+    if (ret_val == (void *)-1) 
+    {
+        pthread_mutex_unlock(&mutex);
+        return NULL;
+    }
+    
 
 
     Blocks *block = (Blocks *)ret_val;
@@ -84,18 +93,23 @@ void* my_malloc(size_t size)
         tail->next = block;
         tail = block;
     }
-                                // return (void *)(ret_val + sizeof(Blocks));
-    return (void *)(block + 1); // next address after the block header
+
+
+    pthread_mutex_unlock(&mutex);                                
+    return (void *)(block + 1); // next address after the block header,  ||  return (void *)(ret_val + sizeof(Blocks));
 }
 
 void my_free(void *pointer)
 {   
     if (pointer == NULL) return;
 
+
+    pthread_mutex_lock(&mutex);
     Blocks *block = (Blocks *)pointer - 1;
 
     if (block->marker != BLOCK_MARKER)
     {
+        pthread_mutex_unlock(&mutex);
         char temp[] = "my_free: invalid pointer\n"; 
         ssize_t r = write(2, temp, sizeof(temp) - 1);
         (void)r;
@@ -103,6 +117,7 @@ void my_free(void *pointer)
     }
     if (!block->in_use)
     {
+        pthread_mutex_unlock(&mutex);
         char temp[] = "my_free: double free detected\n";
         ssize_t r = write(2, temp, sizeof(temp) - 1);
         (void)r;
@@ -110,7 +125,6 @@ void my_free(void *pointer)
     }
     
     block->in_use = false;
-
 
     //merging free memory
     if ((block->next != NULL && !block->next->in_use) && ((Blocks *)((char *)(block + 1) + block->length) == block->next))
@@ -147,4 +161,6 @@ void my_free(void *pointer)
             block->previous->next = NULL;
         }
     }
+
+    pthread_mutex_unlock(&mutex);
 }
