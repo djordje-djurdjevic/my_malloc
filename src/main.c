@@ -26,7 +26,9 @@ static Test tests[] = {
     {"no merge hole in memory",             no_merge_hole_in_mem},
     {"split on merged block",               split_on_merged_block},
     {"merged header not valid",             merged_header_not_valid},
-    {"thread test",                         test_threads}
+    {"thread test",                         test_threads},
+    {"alignment test",                      alignment_test},
+    {"allocate MAX_SIZE",                   test_max_size}
 };
 
 

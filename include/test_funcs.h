@@ -27,6 +27,8 @@ void merged_header_not_valid(void);
 void test_threads(void);
 void *worker(void *arg);
 
+void alignment_test(void);
+void test_max_size(void);
 
 
 

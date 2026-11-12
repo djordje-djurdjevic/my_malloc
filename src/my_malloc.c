@@ -1,5 +1,6 @@
 #include <unistd.h>
 #include <pthread.h>
+#include <stdint.h>
 
 #include "my_malloc.h"
 
@@ -10,7 +11,8 @@ static Blocks *tail; // global/static is already null
 
 void* my_malloc(size_t size)
 {   
-    if(!size) return NULL;
+    if (!size) return NULL;
+    if (size > SIZE_MAX - ALIGNMENT - sizeof(Blocks)) return NULL;
 
     //alignment for multiples of 16
     if (size % ALIGNMENT) 

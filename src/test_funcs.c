@@ -3,6 +3,8 @@
 #include <string.h>
 #include <assert.h>
 #include <stdio.h>
+#include <stdint.h>
+
 
 #include "test_funcs.h"
 #include "my_malloc.h"
@@ -466,4 +468,73 @@ void *worker(void *arg)
     }
 
     return NULL;
+}
+
+
+void alignment_test(void)
+{
+    int *a = my_malloc(1);
+    int *b = my_malloc(7);
+    int *c = my_malloc(16);
+    int *d = my_malloc(17);
+    int *e = my_malloc(100);
+    int *f = my_malloc(1000);
+
+    assert((uintptr_t)a % ALIGNMENT == 0);
+    assert((uintptr_t)b % ALIGNMENT == 0);
+    assert((uintptr_t)c % ALIGNMENT == 0);
+    assert((uintptr_t)d % ALIGNMENT == 0);
+    assert((uintptr_t)e % ALIGNMENT == 0);
+    assert((uintptr_t)f % ALIGNMENT == 0);
+
+    //after free and split
+    my_free(f);
+
+    int *g = my_malloc(32);
+    int *h = my_malloc(32);
+    int *i = my_malloc(32);
+
+    assert((uintptr_t)g % ALIGNMENT == 0);
+    assert((uintptr_t)h % ALIGNMENT == 0);
+    assert((uintptr_t)i % ALIGNMENT == 0);
+
+    //after free and merge
+    my_free(a);
+    my_free(b);
+    
+    int *j = my_malloc(64);
+    
+    assert(j == a);
+    assert((uintptr_t)j % ALIGNMENT == 0);
+
+    my_free(c);
+    my_free(d);
+    my_free(e);
+    my_free(g);
+    my_free(h);
+    my_free(i);
+    my_free(j);
+}
+
+void test_max_size(void)
+{
+    assert(my_malloc(SIZE_MAX)      == NULL);
+    assert(my_malloc(SIZE_MAX - 1 ) == NULL);
+    assert(my_malloc(SIZE_MAX - 31) == NULL);
+    assert(my_malloc(SIZE_MAX - 47) == NULL);
+
+ 
+    int *a = my_malloc(16);
+    assert(my_malloc(1UL << 50) == NULL);
+    int *b = my_malloc(16);
+
+    assert(a != NULL);
+    assert(b != NULL);
+    assert(b > a);
+    
+    assert(((Blocks *)a - 1)->next     == (Blocks *)b - 1);
+    assert(((Blocks *)b - 1)->previous == (Blocks *)a - 1);
+
+    my_free(a);
+    my_free(b);
 }
