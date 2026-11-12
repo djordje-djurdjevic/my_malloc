@@ -24,6 +24,10 @@ void no_merge_hole_in_mem(void);
 void split_on_merged_block(void);
 void merged_header_not_valid(void);
 
+void test_threads(void);
+void *worker(void *arg);
+
+
 
 
 #endif

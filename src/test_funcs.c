@@ -2,9 +2,16 @@
 #include <sys/wait.h>
 #include <string.h>
 #include <assert.h>
+#include <stdio.h>
 
 #include "test_funcs.h"
 #include "my_malloc.h"
+
+#include <pthread.h>
+#include <sched.h>
+
+#define NUM_OF_THREADS 10
+#define THREAD_ITER 1000
 
 void call_test(void (*fn)(void), const char *test_name)
 {
@@ -406,4 +413,57 @@ void merged_header_not_valid(void)
     my_free(b);
     assert(((Blocks *)b - 1)->marker == 0);    
 
+}
+
+void test_threads(void)
+{
+    pthread_t threads[NUM_OF_THREADS];
+    size_t arg[NUM_OF_THREADS] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+    
+    for(size_t i = 0; i < NUM_OF_THREADS; i++)
+    {
+        pthread_create(&threads[i], NULL, worker, (void *)&arg[i]);
+    }
+
+    char temp[32];
+    for(size_t i = 0; i < NUM_OF_THREADS; i++)
+    {
+        pthread_join(threads[i], NULL);
+        size_t len = snprintf(temp, 31, "Thread[%zu] finished\n", i);
+        ssize_t r = write(2, temp, len);
+        (void)r;
+    }
+}    
+
+void *worker(void *arg)
+{
+    int id = *(size_t *)arg;
+    int *p[THREAD_ITER];
+
+    for (size_t i = 0; i < THREAD_ITER; i++)
+    {
+        p[i] = my_malloc(4 * ((i % 10) + 1));
+        assert(p[i] != NULL);
+    }
+
+    int data_val[NUM_OF_THREADS] = {0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF, 0x11, 0x22, 0x33, 0x44};
+    for (size_t i = 0; i < THREAD_ITER; i++)
+    {
+        memset(p[i], data_val[id], ((Blocks *)p[i] - 1)->length);
+        sched_yield(); //increases chance for race condition to happen
+    }
+        
+    for (size_t i = 0; i < THREAD_ITER; i++)
+    {
+        unsigned char *p_char = (unsigned char *)p[i];
+
+        for(size_t j = 0; j < ((Blocks *)p[i] - 1)->length; j++)
+        {
+            assert(p_char[j] == data_val[id]);
+        }
+
+        my_free(p[i]);
+    }
+
+    return NULL;
 }

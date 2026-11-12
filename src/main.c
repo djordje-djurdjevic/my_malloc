@@ -25,8 +25,10 @@ static Test tests[] = {
     {"no merge middle block",               no_merge_free_middle_block},
     {"no merge hole in memory",             no_merge_hole_in_mem},
     {"split on merged block",               split_on_merged_block},
-    {"mergeed header not valid",            merged_header_not_valid},
+    {"merged header not valid",             merged_header_not_valid},
+    {"thread test",                         test_threads}
 };
+
 
 int main() 
 {
@@ -38,3 +40,4 @@ int main()
 
     return 0;
 }
+
