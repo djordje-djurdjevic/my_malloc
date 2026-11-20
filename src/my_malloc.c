@@ -65,7 +65,7 @@ void* my_malloc(size_t size)
     }
 
     //increasing the break equivalent to allocating memory
-    void *ret_val = sbrk(sizeof(Blocks) + size); //sbrk returns the old break
+    void *ret_val = sbrk(sizeof(Blocks) + size);
     if (ret_val == (void *)-1) 
     {
         pthread_mutex_unlock(&mutex);
@@ -98,7 +98,7 @@ void* my_malloc(size_t size)
 
 
     pthread_mutex_unlock(&mutex);                                
-    return (void *)(block + 1); // next address after the block header,  ||  return (void *)(ret_val + sizeof(Blocks));
+    return (void *)(block + 1); // next address after the block header,  or  return (void *)(ret_val + sizeof(Blocks));
 }
 
 void my_free(void *pointer)

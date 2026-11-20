@@ -38,7 +38,6 @@ static Test tests[] = {
 
 int main() 
 {
-    //fflush(stdout);
     for(size_t i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
     {
         call_test(tests[i].fn, tests[i].name);

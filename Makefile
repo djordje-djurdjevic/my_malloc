@@ -8,6 +8,9 @@ all: test
 test: $(SRC) $(HDR)
 	$(CC) $(CFLAGS) -O2 $(SRC) -o test
 
+run: test
+	./test
+
 debug: $(SRC) $(HDR)
 	$(CC) $(CFLAGS) -g -O0 $(SRC) -o test_debug
 
