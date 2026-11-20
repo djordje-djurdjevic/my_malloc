@@ -71,3 +71,5 @@ To debug a single failing test, build with `make debug` and run it under `gdb`.
 - Pointer validation uses a marker value. This is a heuristic: reading the header of a pointer that did not come from this allocator is undefined behaviour.
 - Calling `printf` (or anything else that uses libc `malloc`) between allocations can move the program break and leave gaps between blocks. The allocator handles this when merging and shrinking, but it is worth knowing when debugging.
 - No `calloc` or `realloc` yet.
+
+Licensed under the MIT License
