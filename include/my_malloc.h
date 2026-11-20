@@ -7,6 +7,7 @@
 
 #define ALIGNMENT 16
 #define BLOCK_MARKER 0xDEADBEEF
+#define LEN_4KB 4096
 
 void* my_malloc(size_t size);
 void  my_free(void *pointer);

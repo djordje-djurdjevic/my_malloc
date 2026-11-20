@@ -28,7 +28,11 @@ static Test tests[] = {
     {"merged header not valid",             merged_header_not_valid},
     {"thread test",                         test_threads},
     {"alignment test",                      alignment_test},
-    {"allocate MAX_SIZE",                   test_max_size}
+    {"allocate MAX_SIZE",                   test_max_size},
+    {"return memory to kernel",             return_memory_to_kernel},
+    {"return memory hole before tail",      return_memory_hole_before_tail},
+    {"no return hole after tail",           no_return_hole_after_tail},
+    {"return memory all blocks",            return_memory_all_blocks}
 };
 
 

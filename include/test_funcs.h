@@ -30,6 +30,10 @@ void *worker(void *arg);
 void alignment_test(void);
 void test_max_size(void);
 
+void return_memory_to_kernel(void);
+void return_memory_hole_before_tail(void);
+void no_return_hole_after_tail(void);
+void return_memory_all_blocks(void);
 
 
 #endif

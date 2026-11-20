@@ -538,3 +538,65 @@ void test_max_size(void)
     my_free(a);
     my_free(b);
 }
+
+void return_memory_to_kernel(void)
+{
+    void *brk_ptr = sbrk(0);
+    int *a = my_malloc(4096 * 2);
+
+    assert(sbrk(0) > brk_ptr);
+
+    my_free(a);
+    assert(sbrk(0) == brk_ptr);
+}
+
+
+void return_memory_hole_before_tail(void)
+{
+    int *a = my_malloc(4096);
+    (void)a;
+    sbrk(16);
+    void *brk_ptr = sbrk(0);
+    int *b = my_malloc(4096);
+
+    my_free(b);
+
+    assert(sbrk(0) == brk_ptr);
+}
+
+void no_return_hole_after_tail(void)
+{
+    int *a = my_malloc(4096);
+    sbrk(16);
+    void *brk_ptr = sbrk(0);
+
+    my_free(a);
+
+    assert(sbrk(0) == brk_ptr);
+    assert(((Blocks *)a - 1)->in_use == false);
+}
+
+void return_memory_all_blocks(void)
+{
+    void *brk_ptr = sbrk(0);
+
+    int *a = my_malloc(4096);
+    int *b = my_malloc(4096);
+    int *c = my_malloc(4096);
+    int *d = my_malloc(4096);
+    int *e = my_malloc(4096);
+
+    my_free(e);
+    my_free(d);
+    my_free(c);
+    my_free(b);
+    my_free(a);
+
+    assert(sbrk(0) == brk_ptr);
+
+    int *f = my_malloc(16);
+    assert(f == a);
+    assert(((Blocks *)f - 1)->next == NULL);
+    assert(((Blocks *)f - 1)->previous == NULL);
+
+}

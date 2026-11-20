@@ -164,5 +164,35 @@ void my_free(void *pointer)
         }
     }
 
+    //giving memory back to the kernel
+    if (!tail->in_use && tail->length >= LEN_4KB && ((unsigned char *)tail + tail->length + sizeof(Blocks) == sbrk(0)))
+    {
+        intptr_t dealloc_val = tail->length + sizeof(Blocks);
+        
+        Blocks *previous_block = NULL;
+        if (tail->previous != NULL) 
+        {
+            previous_block = tail->previous;
+        }
+
+        void *ret_val = sbrk(-dealloc_val);
+        if (ret_val == (void *)-1) 
+        {
+            pthread_mutex_unlock(&mutex);
+            return;
+        }
+
+        if (previous_block != NULL)
+        {
+            previous_block->next = NULL;
+            tail = previous_block;
+        }
+        else 
+        {
+            tail = NULL;
+            head = NULL;
+        }
+    }
+
     pthread_mutex_unlock(&mutex);
 }
