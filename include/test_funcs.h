@@ -35,5 +35,19 @@ void return_memory_hole_before_tail(void);
 void no_return_hole_after_tail(void);
 void return_memory_all_blocks(void);
 
+void test_calloc(void);
+void calloc_test_max_size(void);
+void calloc_parameter_zero(void);
+
+void realloc_null_parameter(void);
+void realloc_zero_parameter(void);
+void realloc_increase_size(void);
+void realloc_decrease_size(void);
+void realloc_freed_pointer(void);
+void realloc_invalid_pointer(void);
+void realloc_test_max_size(void);
+void realloc_with_adjacent_blocks(void);
+void realloc_freed_block(void);
+
 
 #endif

@@ -435,10 +435,12 @@ void *worker(void *arg)
 {
     int id = *(size_t *)arg;
     int *p[THREAD_ITER];
+    size_t malloc_size[THREAD_ITER];
 
     for (size_t i = 0; i < THREAD_ITER; i++)
-    {
-        p[i] = my_malloc(4 * ((i % 10) + 1));
+    {   
+        malloc_size[i] = 4 * ((i % 10) + 1); 
+        p[i] = my_malloc(malloc_size[i]);
         assert(p[i] != NULL);
     }
 
@@ -448,14 +450,41 @@ void *worker(void *arg)
         memset(p[i], data_val[id], ((Blocks *)p[i] - 1)->length);
         sched_yield(); //increases chance for race condition to happen
     }
-        
+
+    //added realloc
+    for (size_t i = 0; i < THREAD_ITER; i++)
+    {   
+        int *tmp;
+        if (i % 2)
+        {
+            tmp = my_realloc(p[i], malloc_size[i] + 64);
+        }
+        else
+        {
+            tmp = my_realloc(p[i], malloc_size[i] / 2);
+        }
+        assert(tmp != NULL);
+        p[i] = tmp;
+    }
+
+
     for (size_t i = 0; i < THREAD_ITER; i++)
     {
         unsigned char *p_char = (unsigned char *)p[i];
 
-        for(size_t j = 0; j < ((Blocks *)p[i] - 1)->length; j++)
+        if (i % 2)
         {
-            assert(p_char[j] == data_val[id]);
+            for(size_t j = 0; j < malloc_size[i]; j++)
+            {
+                assert(p_char[j] == data_val[id]);
+            }
+        }
+        else
+        {
+            for(size_t j = 0; j < malloc_size[i] / 2; j++)
+            {
+                assert(p_char[j] == data_val[id]);
+            }
         }
 
         my_free(p[i]);
@@ -593,4 +622,236 @@ void return_memory_all_blocks(void)
     assert(((Blocks *)f - 1)->next == NULL);
     assert(((Blocks *)f - 1)->previous == NULL);
 
+}
+
+void test_calloc(void)
+{
+    int *a = my_malloc(40);
+    for(size_t i = 0; i < 10; i++)
+    {
+        a[i] = 0xAAFF;
+    }
+    my_free(a);
+
+    int *b = my_calloc(10, sizeof(int));
+    unsigned char *pb = (unsigned char *)b;
+
+    for(size_t i = 0; i < 40; i++)
+    {
+        assert(pb[i] == 0);
+    }
+
+    assert(a == b);
+    my_free(b);
+}
+
+void calloc_test_max_size(void)
+{
+    int *a = my_calloc(SIZE_MAX / 2 + 2, 2);
+    assert(a == NULL);
+
+    int *b = my_calloc(SIZE_MAX, 1);
+    assert(b == NULL);
+}
+
+void calloc_parameter_zero(void)
+{
+    int *a = my_calloc(0, 10);
+    assert(a == NULL);
+
+    int *b = my_calloc(10, 0);
+    assert(b == NULL);
+}
+
+void realloc_null_parameter(void)
+{
+    int *a = my_realloc(NULL, 2);
+    assert(a != NULL);
+    my_free(a);
+}
+
+void realloc_zero_parameter(void)
+{
+    int *a = my_malloc(sizeof(int));
+    int *r = my_realloc(a, 0); //same as free
+    assert(r == NULL);
+    assert(((Blocks *)a - 1)->in_use == false);
+
+    int *b = my_malloc(sizeof(int));
+    assert(b == a);
+    my_free(b);
+}
+
+void realloc_increase_size(void)
+{
+    int *a = my_malloc(8 * sizeof(int));
+    for (size_t i = 0; i < 8; i++)
+    {
+        a[i] = 0xAA;
+    }
+    
+    a = my_realloc(a, 64);
+    assert(a != NULL);
+    for (size_t i = 8; i < 16; i++)
+    {
+        a[i] = 0xBB;
+    }
+
+    for (size_t i = 0; i < 16; i++)
+    {   
+        if (i < 8)
+        {
+            assert(a[i] == 0xAA);
+        }
+        else 
+        {
+            assert(a[i] == 0xBB);
+        }
+    }
+    assert((uintptr_t)a % ALIGNMENT == 0);
+    my_free(a);
+}
+
+void realloc_decrease_size(void)
+{
+    int *a = my_malloc(8 * sizeof(int));
+    for (size_t i = 0; i < 8; i++)
+    {
+        a[i] = 0xAA;
+    }
+    
+    int *tmp = my_realloc(a, 16);
+    assert(tmp != NULL);
+    assert(tmp == a);
+
+    for (size_t i = 0; i < 4; i++)
+    {
+        assert(a[i] == 0xAA);
+    }
+    assert((uintptr_t)a % ALIGNMENT == 0);
+
+    my_free(a);
+}
+
+void realloc_freed_pointer(void)
+{
+    int *a = my_malloc(16);
+    my_free(a);
+    assert(my_realloc(a, 32) == NULL);
+}
+
+void realloc_invalid_pointer(void)
+{
+    int *a = my_malloc(16);
+    ((Blocks *)a - 1)->marker = 0xFF;
+    assert(my_realloc(a, 32) == NULL);
+
+    ((Blocks *)a - 1)->marker = BLOCK_MARKER;
+    my_free(a);
+}
+
+
+void realloc_test_max_size(void)
+{
+    int *a =  my_malloc(16);
+    for (size_t i = 0; i < 4; i++)
+    {
+        a[i] = 0xAA;
+    }
+
+    int *tmp = my_realloc(a, SIZE_MAX);
+    assert(tmp == NULL);
+
+    for (size_t i = 0; i < 4; i++)
+    {
+        assert(a[i] == 0xAA);
+    }
+
+    my_free(a);
+}
+
+void realloc_with_adjacent_blocks(void)
+{
+    int *a = my_malloc(32);
+    int *b = my_malloc(32);
+    int *c = my_malloc(32);
+    int *b_first = b;
+
+    for(size_t i = 0; i < 8; i++)
+    {
+        a[i] = 0xAA;
+        b[i] = 0xBB;
+        c[i] = 0xCC;
+    }
+
+    //increase
+    b = my_realloc(b , 64);
+    for(size_t i = 0; i < 8; i++)
+    {
+        assert(a[i] == 0xAA);
+        assert(b[i] == 0xBB);
+        assert(c[i] == 0xCC);
+    }
+    for(size_t i = 32 / 4; i < 64 / 4; i++)
+    {
+        b[i] = 0xDD;
+        assert(b[i] == 0xDD);
+    }
+   
+
+    //decrease
+    b = my_realloc(b , 32);
+    for(size_t i = 0; i < 32 / 4; i++)
+    {
+        assert(a[i] == 0xAA);
+        assert(b[i] == 0xBB);
+        assert(c[i] == 0xCC);
+    }
+
+    //increase
+    b = my_realloc(b , 128);
+    for(size_t i = 0; i < 8; i++)
+    {
+        assert(a[i] == 0xAA);
+        assert(b[i] == 0xBB);
+        assert(c[i] == 0xCC);
+    }
+    for(size_t i = 8; i < 64 / 4; i++)
+    {
+        assert(b[i] == 0xDD);
+    }
+    for(size_t i = 64 / 4; i < 128 / 4; i++)
+    {
+        b[i] = 0xEE;
+        assert(b[i] == 0xEE);
+    }
+    
+
+    //decrease
+    b = my_realloc(b , 32);
+    for(size_t i = 0; i < 32 / 4; i++)
+    {
+        assert(a[i] == 0xAA);
+        assert(b[i] == 0xBB);
+        assert(c[i] == 0xCC);
+    }
+
+    int *x = my_malloc(32);
+    assert(x == b_first);
+
+    my_free(a);
+    my_free(b);
+    my_free(c);
+}
+
+void realloc_freed_block(void)
+{
+    int *a = my_malloc(128);
+    int *b = my_realloc(NULL, 16);
+    my_free(a);
+    b = my_realloc(b, 144);
+
+    assert(b != a);
+
+    my_free(b);
 }

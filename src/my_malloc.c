@@ -101,13 +101,13 @@ void* my_malloc(size_t size)
     return (void *)(block + 1); // next address after the block header,  or  return (void *)(ret_val + sizeof(Blocks));
 }
 
-void my_free(void *pointer)
+void my_free(void *ptr)
 {   
-    if (pointer == NULL) return;
+    if (ptr == NULL) return;
 
 
     pthread_mutex_lock(&mutex);
-    Blocks *block = (Blocks *)pointer - 1;
+    Blocks *block = (Blocks *)ptr - 1;
 
     if (block->marker != BLOCK_MARKER)
     {
@@ -128,7 +128,7 @@ void my_free(void *pointer)
     
     block->in_use = false;
 
-    //merging free memory
+    //memory compaction   
     if ((block->next != NULL && !block->next->in_use) && ((Blocks *)((char *)(block + 1) + block->length) == block->next))
     {
         block->length += sizeof(Blocks) + block->next->length;
@@ -195,4 +195,47 @@ void my_free(void *pointer)
     }
 
     pthread_mutex_unlock(&mutex);
+}
+
+void* my_calloc(size_t num, size_t size)
+{
+    if (!num || !size) return NULL;
+    if (num > (SIZE_MAX - ALIGNMENT - sizeof(Blocks)) / size) return NULL;
+    
+
+    void *ptr = my_malloc(num * size);
+    if (ptr == NULL) return NULL;
+
+    memset(ptr, 0, num * size);
+    return ptr;
+}
+
+void *my_realloc(void *old_ptr, size_t new_size)
+{
+    if (old_ptr == NULL) return my_malloc(new_size);
+    if (!new_size) 
+    {
+        my_free(old_ptr);
+        return NULL;
+    }
+
+    if (((Blocks *)old_ptr - 1)->marker != BLOCK_MARKER || !((Blocks *)old_ptr - 1)->in_use)
+    {
+        char temp[] = "my_realloc: invalid pointer\n"; 
+        ssize_t r = write(2, temp, sizeof(temp) - 1);
+        (void)r;
+        return NULL;
+    }
+    size_t old_size = ((Blocks *)old_ptr - 1)->length;
+    if (new_size <= old_size) return old_ptr;
+
+    
+    void *new_ptr = my_malloc(new_size);
+    if (new_ptr == NULL) return NULL;
+
+
+    memcpy(new_ptr, old_ptr, old_size);
+    my_free(old_ptr);
+
+    return new_ptr;
 }
